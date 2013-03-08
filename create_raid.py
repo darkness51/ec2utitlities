@@ -112,10 +112,6 @@ class Raid(object):
         # Configure fstab and mount the new RAID0 device
         mnt_point = '/raid0'
         self.run_command("echo '/dev/md0\t{0}\txfs\tdefaults,nobootwait,noatime\t0\t0' | sudo tee -a /etc/fstab".format(mnt_point))
-        self.run_command('sudo mkdir -p {0}'.format(mnt_point))
-        self.run_command('sudo mount -a')
-        self.run_command('sudo mkdir -p {0}'.format(path.join(mnt_point, 'cassandra')))
-        self.run_command('sudo chown -R cassandra:cassandra {0}'.format(path.join(mnt_point, 'cassandra')))
 
         logger.info('Showing RAID0 details:')
         self.run_command('cat /proc/mdstat')
