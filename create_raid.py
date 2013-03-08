@@ -23,6 +23,8 @@ class Raid(object):
         logger.setLevel(logging.DEBUG)
 
         self._devices_pattern = devices_pattern
+
+        self.system_initial_config()
         # Remove EC2 default /mnt from fstab
         self._fstab = ''
         self._file_to_open = '/etc/fstab'
@@ -121,6 +123,11 @@ class Raid(object):
         self.run_command('sudo mdadm --detail /dev/md0')
         return mnt_point
 
+    def system_initial_config(self):
+        self.run_command('echo "* soft nofile 32768" | sudo tee -a /etc/security/limits.conf')
+        self.run_command('echo "* hard nofile 32768" | sudo tee -a /etc/security/limits.conf')
+        self.run_command('echo "root soft nofile 32768" | sudo tee -a /etc/security/limits.conf')
+        self.run_command('echo "root hard nofile 32768" | sudo tee -a /etc/security/limits.conf')
 
     def run_command(self, command):
         """ Run system command """
@@ -133,25 +140,6 @@ class Raid(object):
 
         return out
 
-    def run_command_with_pipe(self, command1, command2):
-        """ Run command with pipes """
-        p1 = Popen(shlex.split(command1), stdout=PIPE, stderr=PIPE)
-        p2 = Popen(shlex.split(command2), stdout=PIPE, stderr=PIPE)
-        p1.stdout.close()  # Allow p1 to receive a SIGPIPE if p2 exits.
-        read = p2.stdout.read()
-
-        if len(read) > 0:
-            logger.info(time.strftime("%m/%d/%y-%H:%M:%S", time.localtime()) + ' ' + command1 + ' | ' + command2 + ":\n" + read)
-        else:
-            logger.info(time.strftime("%m/%d/%y-%H:%M:%S", time.localtime()) + ' ' + command1 + ' | ' + command2)
-
-        output = p2.communicate()[0]
-        if output and len(output[0]) > 0:
-            logger.info(time.strftime("%m/%d/%y-%H:%M:%S", time.localtime()) + ' ' + command1 + ' | ' + command2 + ":\n" + output[0])
-        if output and len(output[1] > 0):
-            logger.info(time.strftime("%m/%d/%y-%H:%M:%S", time.localtime()) + ' ' + command1 + ' | ' + command2 + ":\n" + output[1])
-
-        return output
 
 if __name__ == '__main__':
     raid = Raid("xvd")
